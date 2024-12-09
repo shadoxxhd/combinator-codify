@@ -1,0 +1,10 @@
+{
+    "name": "combinator-codify",
+    "version": "0.0.1",
+    "title": "Combinator Codify",
+    "author": "Sparr",
+    "contact": "sparr0@gmail.com",
+    "homepage": "https://github.com/sparr/factorio-mod-combinator-codify",
+    "factorio_version": "2.0",
+    "description": "Allows editing combinator settings as code"
+}

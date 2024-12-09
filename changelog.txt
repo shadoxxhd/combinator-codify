@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.0.1
+Date: 2024-12-09
+  Features:
+    - Allows editing combinators using serialized lua representation
