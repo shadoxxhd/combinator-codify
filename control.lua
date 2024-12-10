@@ -107,10 +107,11 @@ local function on_gui_opened(event)
   local anchor = { gui = defines.relative_gui_type[entity.type:gsub("-", "_") .. "_gui"], position = defines
   .relative_gui_position.right }
   local frame = (player.gui.relative.add { type = "frame", anchor = anchor, name = "combinator-codify", caption = "Combinator Code", direction = "vertical" })
-  frame.style.width = 400
+  frame.style.width = 600
   local textbox = frame.add { type = "text-box", name = "combinator-codify-textbox", text = get_combinator_cb_code(entity) }
-  textbox.style.width = 380
+  textbox.style.width = 580
   textbox.style.vertically_squashable = true
+  textbox.style.font = "combinator-codify"
   local button_flow = (frame.add { type = "flow", name = "combinator-codify-button-flow", direction = "horizontal" })
   button_flow.add { type = "button", name = "combinator-codify-apply-button", caption = "Apply" }
   button_flow.add { type = "button", name = "combinator-codify-refresh-button", caption = "Refresh" }
