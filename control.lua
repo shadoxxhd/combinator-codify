@@ -139,9 +139,13 @@ local function on_gui_apply(event)
         assert(func)
         local cb_table = func()
         -- restore redundant/unnecessary outer layer to table
-        if cb_table.sections then cb_table = { sections = { sections = cb_table } } end
-        if cb_table.operation then cb_table = { arithmetic_conditions = cb_table } end
-        if cb_table.conditions then cb_table = { decider_conditions = cb_table } end
+        if combinator.type == "constant-combinator" then
+          cb_table = { sections = { sections = cb_table } }
+        elseif combinator.type == "arithmetic-combinator" then
+          cb_table = { arithmetic_conditions = cb_table }
+        elseif combinator.type == "decider-combinator" then
+          cb_table = { decider_conditions = cb_table }
+        end
         local full_table = {
           blueprint = {
             entities = {
