@@ -152,7 +152,8 @@ local function on_gui_apply(event)
               {
                 entity_number = 1,
                 name = combinator.name,
-                position = { x = 0, y = 0 },
+                position = combinator.position,
+                direction = combinator.direction,
                 control_behavior = cb_table
               }
             }
@@ -165,7 +166,7 @@ local function on_gui_apply(event)
         inv[1].build_blueprint {
           surface = combinator.surface,
           force = combinator.force,
-          position = combinator.position, combinator.position,
+          position = combinator.position,
           raise_built = false,
         }
         inv.destroy()
