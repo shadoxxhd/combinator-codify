@@ -112,10 +112,18 @@ local function on_gui_opened(event)
   textbox.style.width = 580
   textbox.style.vertically_squashable = true
   textbox.style.font = "combinator-codify"
+  textbox.style.rich_text_setting = defines.rich_text_setting.enabled
   local button_flow = (frame.add { type = "flow", name = "combinator-codify-button-flow", direction = "horizontal" })
   button_flow.add { type = "button", name = "combinator-codify-apply-button", caption = "Apply" }
   button_flow.add { type = "button", name = "combinator-codify-refresh-button", caption = "Refresh" }
+  button_flow.add { type = "button", name = "combinator-codify-richtext-button", caption = "Rich Text" }
 end
+
+local next_rich_text_setting = {
+  [defines.rich_text_setting.disabled] = defines.rich_text_setting.enabled,
+  [defines.rich_text_setting.enabled] = defines.rich_text_setting.highlight,
+  [defines.rich_text_setting.highlight] = defines.rich_text_setting.disabled,
+}
 
 ---use the text in a player's mod gui to set the signals in their open combinator
 ---@param event EventData.on_gui_click | EventData.on_gui_confirmed
@@ -130,47 +138,51 @@ local function on_gui_apply(event)
   then
     local player = game.get_player(event.player_index)
     if not player then return end
+    local textbox = player.gui.relative["combinator-codify"]["combinator-codify-textbox"]
     if element.name == "combinator-codify-refresh-button" then
-      player.gui.relative["combinator-codify"]["combinator-codify-textbox"].text = get_combinator_cb_code(player.opened)
+      textbox.text = get_combinator_cb_code(player.opened)
+    elseif element.name == "combinator-codify-richtext-button" then
+      textbox.style.rich_text_setting = next_rich_text_setting[textbox.style.rich_text_setting]
     else
       local combinator = game.get_player(event.player_index).opened --[[@as LuaEntity]]
       if combinator and combinator.valid then
-        local text = player.gui.relative["combinator-codify"]["combinator-codify-textbox"].text
+        local text = textbox.text
         local func = loadstring("return " .. text)
-        assert(func)
-        local cb_table = func()
-        -- restore redundant/unnecessary outer layer to table
-        if combinator.type == "constant-combinator" then
-          cb_table = { sections = { sections = cb_table } }
-        elseif combinator.type == "arithmetic-combinator" then
-          cb_table = { arithmetic_conditions = cb_table }
-        elseif combinator.type == "decider-combinator" then
-          cb_table = { decider_conditions = cb_table }
-        end
-        local full_table = {
-          blueprint = {
-            entities = {
-              {
-                entity_number = 1,
-                name = combinator.name,
-                position = combinator.position,
-                direction = combinator.direction,
-                control_behavior = cb_table
+        if func then
+          local cb_table = func()
+          -- restore redundant/unnecessary outer layer to table
+          if combinator.type == "constant-combinator" then
+            cb_table = { sections = { sections = cb_table } }
+          elseif combinator.type == "arithmetic-combinator" then
+            cb_table = { arithmetic_conditions = cb_table }
+          elseif combinator.type == "decider-combinator" then
+            cb_table = { decider_conditions = cb_table }
+          end
+          local full_table = {
+            blueprint = {
+              entities = {
+                {
+                  entity_number = 1,
+                  name = combinator.name,
+                  position = combinator.position,
+                  direction = combinator.direction,
+                  control_behavior = cb_table
+                }
               }
             }
           }
-        }
-        local bp_json = helpers.table_to_json(full_table)
-        inv = game.create_inventory(1)
-        inv.insert("blueprint")
-        inv[1].import_stack(bp_json)
-        inv[1].build_blueprint {
-          surface = combinator.surface,
-          force = combinator.force,
-          position = combinator.position,
-          raise_built = false,
-        }
-        inv.destroy()
+          local bp_json = helpers.table_to_json(full_table)
+          inv = game.create_inventory(1)
+          inv.insert("blueprint")
+          inv[1].import_stack(bp_json)
+          inv[1].build_blueprint {
+            surface = combinator.surface,
+            force = combinator.force,
+            position = combinator.position,
+            raise_built = false,
+          }
+          inv.destroy()
+        end
       end
     end
   end

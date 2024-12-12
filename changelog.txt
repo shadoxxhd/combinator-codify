@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.5
+Date: 2024-12-12
+  Features:
+    - Toggle button for rich text content
+  Bugfixes:
+    - Ignore invalid input instead of error out to menu
+---------------------------------------------------------------------------------------------------
 Version: 0.0.4
 Date: 2024-12-10
   Changes:
