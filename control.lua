@@ -80,6 +80,28 @@ local reprConfig = {}
 
 
 --- representation: sh4dow
+--- 
+--- syntax: (r"..." means "matching this regex")
+--- signal = [<category-prefix>]name[<quality-suffix>][<channel-suffix>]
+--- category-prefix = <category-shorthand>.
+--- quality-suffix = +(<+>|<quality-rank>|<quality-name>|"<quality-name>")
+--- quality-rank = r"\d+" -- preferred over quality-name if ambiguous
+--- quality-name = r"[a-zA-Z0-9-_]+"
+--- + = [<+>]+
+--- channel-suffix = #[r|R][g|G]
+--- 
+--- // preliminary
+--- constant-combinator = <category> [--- <constant-combinator>]
+--- category = [\[<categoryName>\]] entries
+--- entries = [signal <count>][,<entries>]
+--- 
+--- decider-combinator = [<conditions>] : [<outputs>]
+--- conditions = <signal> <operator> <signal_or_constant> [(& | \|) <conditions>]
+--- signal_or_constant = <signal> | <count>
+--- outputs = <signal> [= <count>] [, <outputs>]
+--- 
+--- arithmetic-combinator = <signal> <operator> <signal_or_constant> : <signal>
+--- 
 local sh4dowCfg = {}
 reprConfig.sh4dow = sh4dowCfg
 sh4dowCfg.quality = {[0]="", [1]="+", [2]="++", [3]="+++", [4]="++++", [5]="+++++"}
@@ -201,7 +223,7 @@ local function parser_sh4dow(str, type)
         if sig and sig.name then
           --local qual = #(signal:match("[%w%-_]+(%+*)") or "")
           sig.comparator = "=" -- always "=" for constant combinator
-          sig.count = signal:match("^%s*%w%.?[%w%-_]*%+*%s*(%d+)") or 0
+          sig.count = signal:match("^%s*%w%.?[%w%-_]*%+*%s*(%-?%d+)") or 0
           sig.index = ind2
           --if signal:match("(%w+%.)") then
           --  sig.type = reprConfig.sh4dow.iCategories[signal:match("(%w+%.)")]
@@ -247,7 +269,7 @@ local function parser_sh4dow(str, type)
           condt.second_signal_networks.red = channels:match("[rR]") and true or false
         end
       else
-        condt.constant = tonumber(second:match("(%d+)"))
+        condt.constant = tonumber(second:match("(%-?%d+)"))
       end
       table.insert(condts,condt)
     end
@@ -265,7 +287,7 @@ local function parser_sh4dow(str, type)
       end
       if out:match("(=)") then
         outt.copy_count_from_input = false
-        outt.constant = tonumber(out:match("=%s*(%d+)") or 1)
+        outt.constant = tonumber(out:match("=%s*(%-?%d+)") or 1)
       end
       table.insert(outs, outt)
     end
