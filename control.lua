@@ -119,11 +119,11 @@ local function signalFormat_sh4dow(signal) -- maybe change to (cat, name, qualit
   if not signal then return "" end
   local ret = ""
   if signal.type then
-    ret = ret .. reprConfig.sh4dow.categories[signal.type]
+    ret = ret .. (reprConfig.sh4dow.categories[signal.type] or "?")
   end
   ret = ret .. signal.name
   if signal.quality then
-    ret = ret .. reprConfig.sh4dow.quality[qualityLookup[signal.quality]] .. " "
+    ret = ret .. (reprConfig.sh4dow.quality[qualityLookup[signal.quality]] or "+?")
   end
   return ret
 end
@@ -141,9 +141,21 @@ local function parseSignal(sig)
   local ftype, namepos = sig:match("^%s*(%w%.)()")
   signal.type = reprConfig.sh4dow.iCategories[ftype]
   signal.name = sig:sub(namepos or 1):match("^%s*([%w%-_]+)")
-  local qual = #(sig:match("%++") or "") -- exclusively consider after name??
+  local qual = #(sig:match("%++") or "") -- todo: exclusively consider directly after name??
   signal.quality = iQualityLookup[qual]
   return signal
+end
+
+local function parseSignalAndNetwork(str)
+  local sig = parseSignal(str:match("^[^#]*"))
+  local net = nil
+  local nets = str:match("#[rRgG]*")
+  if nets then
+    net = {}
+    net.green = nets:match("[gG]") and true or false
+    net.red = nets:match("[rR]") and true or false
+  end
+  return sig, net
 end
 
 --- compact representation
@@ -196,7 +208,15 @@ local function formatter_sh4dow(tbl, type)
       ret = ret:sub(1,-3) -- remove trailing ", "
     end
   elseif type == "arithmetic-combinator" then
-    -- todo
+    ret = ret .. signalFormat_sh4dow(tbl.first_signal) .. signalNetworkFormatter_sh4dow(tbl.first_signal_networks) .. " "
+    ret = ret .. tbl.operation .. " "
+    if tbl.second_constant then
+      ret = ret .. tbl.second_constant .. " "
+    else
+      ret = ret .. signalFormat_sh4dow(tbl.second_signal) .. signalNetworkFormatter_sh4dow(tbl.second_signal_networks) .. " "
+    end
+    ret = ret .. ": "
+    ret = ret .. signalFormat_sh4dow(tbl.output_signal)
   elseif type == "selector-combinator" then
     -- todo
   end
@@ -295,6 +315,28 @@ local function parser_sh4dow(str, type)
     return root
   elseif type == "arithmetic-combinator" then
     -- todo
+    local i, out = str:match("^([^:]*):([^:]*)$")
+    local i1, op, i2 = i:match("([^ ]*) +([^ ]*) +([^ ]*)") -- space separation necessary since "-" is both part of signal names and an operator
+    if i1 == nil then
+      op, i2 = i:match("^ *([^ ]*) *([^ ]*) *$")
+      if op == nil then
+        op = i:match("^ *([^ ]*) *$")
+      end
+    end
+    log("i1 "..i1)
+    log("op "..op)
+    log("i2 "..i2)
+    log("out "..out)
+    local root = {}
+    root.first_signal, root.first_signal_networks = parseSignalAndNetwork(i1)
+    root.op = op
+    if tonumber(i2) then
+      root.second_constant = tonumber(i2)
+    else
+      root.second_signal, root.second_signal_networks = parseSignalAndNetwork(i2)
+    end
+    root.output_signal = parseSignal(out)
+    return root
   elseif type == "selector-combinator" then
     -- todo
   end
